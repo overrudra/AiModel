@@ -1,18 +1,18 @@
 MODEL_CONFIG = {
-    "vocab_size": 32000,        # Increased vocab size
-    "block_size": 512,          # Larger context window
-    "n_embd": 768,             # Larger embedding size
-    "n_layer": 12,             # More transformer layers
-    "n_head": 12,              # More attention heads
+    "vocab_size": 270,          # Match actual vocab.json size
+    "block_size": 64,          # Match saved checkpoint block_size
+    "n_embd": 256,             # Keep embedding size
+    "n_layer": 6,              # Keep number of layers
+    "n_head": 8,              # Keep number of attention heads
     "dropout": 0.1,
-    "learning_rate": 1e-4,
-    "batch_size": 32,
+    "learning_rate": 3e-4,     # Match training learning rate
+    "batch_size": 32,          # Match training batch size
     "warmup_steps": 1000,
     "max_steps": 100000
 }
 
 GENERATION_CONFIG = {
-    "max_length": 300,          # Longer responses
+    "max_length": 100,          # Response length
     "min_length": 10,
     "temperature": 0.7,         # More focused responses
     "top_p": 0.9,              # Nucleus sampling

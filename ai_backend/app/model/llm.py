@@ -140,7 +140,9 @@ class TinyTransformer(nn.Module):
             'config': {
                 'vocab_size': self.vocab_size,
                 'block_size': self.block_size,
-                'n_embd': self.n_embd
+                'n_embd': self.n_embd,
+                'n_layer': len(self.blocks),
+                'n_head': self.blocks[0].attention.num_heads if self.blocks else 8
             }
         }, path)
 
@@ -156,8 +158,14 @@ class TinyTransformer(nn.Module):
                 if checkpoint['config']['vocab_size'] != self.vocab_size:
                     print("⚠️ Vocab size mismatch - skipping load")
                     return False
+                if checkpoint['config']['block_size'] != self.block_size:
+                    print("⚠️ Block size mismatch - skipping load")
+                    return False
+                if checkpoint['config']['n_embd'] != self.n_embd:
+                    print("⚠️ Embedding size mismatch - skipping load")
+                    return False
                     
-            self.load_state_dict(checkpoint['model_state_dict'], strict=False)
+            self.load_state_dict(checkpoint['model_state_dict'])
             return True
             
         except Exception as e:

@@ -3,7 +3,8 @@ import torch.nn as nn
 from tokenizers import ByteLevelBPETokenizer
 from torch.utils.data import Dataset, DataLoader
 from app.char_dataset import CharDataset
-from app.model.llm import TinyTransformer  # Your transformer model
+from app.model.llm import TinyTransformer
+from app.model.config import MODEL_CONFIG
 
 # Load trained tokenizer
 tokenizer = ByteLevelBPETokenizer(
@@ -11,12 +12,12 @@ tokenizer = ByteLevelBPETokenizer(
     "tokenizer/merges.txt"
 )
 
-# Hyperparameters
+# Use configuration from MODEL_CONFIG
 vocab_size = tokenizer.get_vocab_size()
-block_size = 16
-batch_size = 32
+block_size = MODEL_CONFIG['block_size']
+batch_size = MODEL_CONFIG['batch_size']
+learning_rate = MODEL_CONFIG['learning_rate']
 epochs = 10
-learning_rate = 3e-4
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Load dataset
@@ -25,7 +26,6 @@ with open("ai-backend/app/dataset.txt", "r", encoding="utf-8") as f:
 
 # Encode entire dataset
 encoded = tokenizer.encode(text).ids
-
 print(f"[DEBUG] Total tokens: {len(encoded)}")
 
 # Custom dataset using token ids
@@ -52,8 +52,8 @@ if len(dataset) == 0:
 
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-# Create model
-model = TinyTransformer(vocab_size=vocab_size, block_size=block_size).to(device)
+# Create model with consistent config
+model = TinyTransformer.create_model(MODEL_CONFIG, device)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 criterion = nn.CrossEntropyLoss()
 
@@ -74,6 +74,6 @@ for epoch in range(epochs):
     avg_loss = total_loss / len(dataloader)
     print(f"✅ Epoch {epoch + 1}/{epochs} - Loss: {avg_loss:.4f}")
 
-# Save model
-torch.save(model.state_dict(), "ai-backend/app/tiny_llm.pth")
+# Save model with full configuration
+model.save_checkpoint("ai-backend/app/model/tiny_llm.pth")
 print("✅ Model saved successfully!")

@@ -8,9 +8,15 @@ import numpy as np
 from app.model.llm import TinyTransformer
 from app.model.image_gen import is_image_prompt, generate_image
 from app.model.code_gen import is_code_prompt, generate_code
-from app.model.config import MODEL_CONFIG
+from app.model.config import MODEL_CONFIG, GENERATION_CONFIG
 from app.knowledge.retriever import KnowledgeRetriever
 from app.training.trainer import ModelTrainer
+from app.utils.text_processor import clean_text, format_response
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # FastAPI setup
 app = FastAPI(
@@ -36,6 +42,8 @@ def encode_text(text: str) -> torch.Tensor:
     for word in words:
         if f'Ġ{word}' in vocab:
             tokens.append(vocab[f'Ġ{word}'])
+        elif word in vocab:
+            tokens.append(vocab[word])
         else:
             if tokens[-1] != vocab['<s>']:
                 tokens.append(vocab['Ġ'])
@@ -50,10 +58,10 @@ def decode_text(token_ids: torch.Tensor) -> str:
     for tid in token_ids:
         token = id_to_token.get(tid.item(), '<unk>')
         if token.startswith('Ġ'):
-            text.append(token[1:])
+            text.append(' ' + token[1:])
         else:
             text.append(token)
-    return ''.join(text)
+    return ''.join(text).strip()
 
 def clean_response(text: str) -> str:
     """Clean up model generated response"""
@@ -71,7 +79,6 @@ def clean_response(text: str) -> str:
     # Clean up the result
     text = text.strip()
     
-    # Return default response if text is too messy
     if (len(text.split()) < 3 or 
         not re.match(r'^[a-zA-Z0-9\s.,!?-]+$', text) or
         len(text) < 10):
@@ -79,122 +86,72 @@ def clean_response(text: str) -> str:
         
     return text
 
-def generate_text(prompt: str, max_tokens: int = 100) -> str:
-    """Generate text with knowledge retrieval"""
+def generate_text(prompt: str, max_tokens: int = GENERATION_CONFIG['max_length']) -> str:
+    """Generate text with knowledge retrieval and model generation"""
     try:
-        # First try online search
-        response = knowledge_retriever.search_wikipedia(prompt)
-        if response:
+        # First try knowledge retrieval
+        response = knowledge_retriever.get_knowledge(prompt)
+        if response and not response.startswith("I apologize"):
             return response
 
-        # Then try web search
-        web_results = knowledge_retriever.search_web(prompt)
-        if web_results:
-            return web_results[0]
-
-        # Finally fallback to model generation
+        # If no knowledge found, use model generation
         input_ids = encode_text(prompt)
         with torch.no_grad():
             output_ids = model.generate(
                 input_ids,
                 max_tokens=max_tokens,
-                temperature=0.7  # Lower temperature for more focused responses
+                temperature=GENERATION_CONFIG['temperature']
             )
         response = decode_text(output_ids[0])
         response = clean_response(response)
         
+        # If response is good, add to training data
+        if len(response) > 10 and not response.startswith("I apologize"):
+            trainer.add_conversation(prompt, response)
+        
         return response
 
     except Exception as e:
-        print(f"Generation error: {e}")
+        logger.error(f"Generation error: {e}")
         return DEFAULT_RESPONSE
-
-def quick_train(model, responses):
-    """Quick pre-training"""
-    model.train()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    criterion = torch.nn.CrossEntropyLoss()
-    
-    for _ in range(20):
-        for response in responses:
-            try:
-                input_ids = encode_text(response)
-                if input_ids.size(1) > model.block_size:
-                    input_ids = input_ids[:, :model.block_size]
-                
-                logits = model(input_ids)
-                targets = input_ids.clone()
-                
-                loss = criterion(
-                    logits.view(-1, model.vocab_size),
-                    targets.view(-1)
-                )
-                
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                
-            except Exception as e:
-                print(f"Training error: {e}")
-                continue
-    
-    model.eval()
-    return model
 
 # Load vocab and device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-with open(os.path.join(BASE_DIR, "tokenizer", "vocab.json"), 'r') as f:
-    vocab = json.load(f)
-id_to_token = {v: k for k, v in vocab.items()}
-VOCAB_SIZE = len(vocab)
+vocab_path = os.path.join(BASE_DIR, "tokenizer", "vocab.json")
+logger.info(f"Loading vocabulary from {vocab_path}")
 
-# Common words
-COMMON_WORDS = {
-    'Hello': 300, 'Hi': 301, 'I': 302, 'am': 303, 'the': 304,
-    'is': 305, 'are': 306, 'what': 307, 'how': 308, 'can': 309,
-    'you': 310, 'help': 311, 'hello': 312, 'world': 313,
-    'today': 324
-}
-
-# Training responses
-COMMON_RESPONSES = [
-    "Hello! How may I help you today?",
-    "Hi there! What can I do for you?",
-    "Hello! Nice to meet you.",
-]
+try:
+    with open(vocab_path, 'r') as f:
+        vocab = json.load(f)
+    id_to_token = {v: k for k, v in vocab.items()}
+    VOCAB_SIZE = len(vocab)
+    logger.info(f"Loaded vocabulary with {VOCAB_SIZE} tokens")
+except Exception as e:
+    logger.error(f"Failed to load vocabulary: {e}")
+    raise RuntimeError("Could not load vocabulary")
 
 # Initialize model
 try:
     model_path = os.path.join(BASE_DIR, "model", "tiny_llm.pth")
-    print(f"Loading model from: {model_path}")
+    logger.info(f"Loading model from: {model_path}")
     
-    config = {
-        "vocab_size": VOCAB_SIZE,
-        "block_size": 64,
-        "n_embd": 256,
-        "n_layer": 6,
-        "n_head": 8,
-        "dropout": 0.1
-    }
-    
-    model = TinyTransformer.create_model(config, device)
+    # Create model with correct vocab size
+    model = TinyTransformer.create_model({**MODEL_CONFIG, "vocab_size": VOCAB_SIZE}, device)
     
     if os.path.exists(model_path):
         if model.load_checkpoint(model_path, device):
-            print("✅ Loaded checkpoint")
+            logger.info("✅ Model loaded successfully")
         else:
-            print("⚠️ Training new model")
-            model = quick_train(model, COMMON_RESPONSES)
-            model.save_checkpoint(model_path)
+            logger.warning("⚠️ Failed to load checkpoint, training new model")
+            model = TinyTransformer.create_model({**MODEL_CONFIG, "vocab_size": VOCAB_SIZE}, device)
     else:
-        print("Training new model...")
-        model = quick_train(model, COMMON_RESPONSES)
-        model.save_checkpoint(model_path)
+        logger.warning("⚠️ No model found, creating new one")
+        model = TinyTransformer.create_model({**MODEL_CONFIG, "vocab_size": VOCAB_SIZE}, device)
     
     model.eval()
     
 except Exception as e:
-    print(f"❌ Model error: {str(e)}")
+    logger.error(f"❌ Model error: {str(e)}")
     raise RuntimeError(f"Failed to initialize model: {str(e)}")
 
 # Initialize services
@@ -243,5 +200,5 @@ async def chat(request: ChatRequest):
         return {"response": response}
         
     except Exception as e:
-        print(f"Chat error: {e}")
+        logger.error(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
