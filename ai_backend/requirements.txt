@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pymongo
+torch
+transformers
+diffusers
+Pillow
+python-multipart
+wikipedia-api==0.5.4
+beautifulsoup4==4.9.3
+requests==2.28.1
+lxml>=4.9.0
+html5lib>=1.1
+concurrent-futures>=3.0.5
+psutil==5.9.0
