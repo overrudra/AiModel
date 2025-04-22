@@ -12,6 +12,9 @@ from app.model.config import MODEL_CONFIG, GENERATION_CONFIG
 from app.knowledge.retriever import KnowledgeRetriever
 from app.training.trainer import ModelTrainer
 from app.utils.text_processor import clean_text, format_response
+from app.knowledge.company_info import get_company_response
+from app.db.mongo import save_chat, get_user_preferences, save_user_preference
+from app.db.schemas import RequestPayload, PersonalizationRequest
 import logging
 
 # Configure logging
@@ -65,26 +68,20 @@ def decode_text(token_ids: torch.Tensor) -> str:
 
 def clean_response(text: str) -> str:
     """Clean up model generated response"""
-    # Remove special tokens
-    text = re.sub(r'<[^>]+>', '', text)  # Remove all XML-like tags
-    text = re.sub(r'[^\x20-\x7E\s]', '', text)  # Remove non-ASCII characters
-    text = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)  # Add spaces between camelCase
-    text = re.sub(r'([A-Za-z])(\d)', r'\1 \2', text)  # Add space between letters and numbers
+    # Remove special tokens and normalize
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r'[^\x20-\x7E\s]', '', text)
+    text = re.sub(r'\s+', ' ', text)
     
-    # Fix common issues
-    text = re.sub(r'W+', '', text)  # Remove repeated W's
-    text = re.sub(r'(.)\1{2,}', r'\1', text)  # Remove character repetitions
-    text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
-    
-    # Clean up the result
-    text = text.strip()
-    
-    if (len(text.split()) < 3 or 
-        not re.match(r'^[a-zA-Z0-9\s.,!?-]+$', text) or
-        len(text) < 10):
-        return "I apologize, I don't have enough information about that topic."
+    # Check for garbled/nonsensical text
+    if (len(text.split()) < 3 or  # Too short
+        len(text) < 10 or  # Too short
+        re.search(r'([a-zA-Z])\1{3,}', text) or  # Repeated characters
+        text.count('?') > 3 or  # Too many question marks
+        len(re.findall(r'[A-Z]{5,}', text)) > 0):  # Long uppercase sequences
+        return "I apologize, but I need more context to provide an accurate response."
         
-    return text
+    return text.strip()
 
 def generate_text(prompt: str, max_tokens: int = GENERATION_CONFIG['max_length']) -> str:
     """Generate text with knowledge retrieval and model generation"""
@@ -92,7 +89,7 @@ def generate_text(prompt: str, max_tokens: int = GENERATION_CONFIG['max_length']
         # First try knowledge retrieval
         response = knowledge_retriever.get_knowledge(prompt)
         if response and not response.startswith("I apologize"):
-            return response
+            return format_response(response)
 
         # If no knowledge found, use model generation
         input_ids = encode_text(prompt)
@@ -103,17 +100,11 @@ def generate_text(prompt: str, max_tokens: int = GENERATION_CONFIG['max_length']
                 temperature=GENERATION_CONFIG['temperature']
             )
         response = decode_text(output_ids[0])
-        response = clean_response(response)
-        
-        # If response is good, add to training data
-        if len(response) > 10 and not response.startswith("I apologize"):
-            trainer.add_conversation(prompt, response)
-        
-        return response
+        return format_response(response)
 
     except Exception as e:
         logger.error(f"Generation error: {e}")
-        return DEFAULT_RESPONSE
+        return "I apologize, but I need more context to provide an accurate response."
 
 # Load vocab and device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -175,7 +166,7 @@ async def get_api_key():
     return {"api_key": "test_key"}
 
 @app.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: RequestPayload):
     if request.api_key not in VALID_API_KEYS:
         raise HTTPException(status_code=401, detail="Invalid API key")
     
@@ -183,22 +174,56 @@ async def chat(request: ChatRequest):
         prompt = request.prompt.strip()
         if not prompt:
             raise HTTPException(status_code=400, detail="Empty prompt")
+
+        # Check if this is a preference setting request
+        if "my" in prompt.lower() and any(pref in prompt.lower() for pref in ["favorite", "favourite", "prefer", "like"]):
+            parts = prompt.lower().split(" is ")
+            if len(parts) == 2:
+                preference_value = parts[1].strip()
+                preference_key = next((word for word in parts[0].split() if word in ["color", "colour", "food", "sport", "hobby"]), None)
+                if preference_key:
+                    preference_key = "favorite_" + preference_key.replace("colour", "color")
+                    save_user_preference(request.email, preference_key, preference_value)
+                    return {"response": f"I'll remember that your {preference_key.replace('favorite_', '')} is {preference_value}!"}
+
+        # Get user preferences
+        user_prefs = get_user_preferences(request.email)
             
-        response = ""
-        if is_image_prompt(prompt):
-            response = generate_image(prompt)
-        elif is_code_prompt(prompt):
-            response = generate_code(prompt)
-        else:
-            response = generate_text(prompt)
+        # Check if query is about user preferences
+        if any(word in prompt.lower() for word in ["what", "tell"]) and "my" in prompt.lower() and any(pref in prompt.lower() for pref in ["favorite", "favourite", "prefer", "like"]):
+            for key, value in user_prefs.items():
+                if key != "_id" and key != "email" and key.replace("favorite_", "") in prompt.lower():
+                    return {"response": f"Your {key.replace('favorite_', '')} is {value}"}
+
+        # If no preference handling, proceed with normal response generation
+        response = generate_text(prompt)
+        cleaned = format_response(response)
+        
+        if not cleaned or cleaned.startswith("I apologize"):
+            return {"response": "I apologize, but I need more context to provide an accurate response."}
+
+        # Save chat history
+        save_chat(request.email, prompt, cleaned)
             
-            # Only train on good responses
-            if len(response) > 10 and not response.startswith("I apologize"):
-                knowledge_retriever.learned.add_knowledge(prompt, response, "generated")
-                trainer.add_conversation(prompt, response)
+        # Only train on good responses
+        if len(cleaned) > 10 and not cleaned.startswith("I apologize"):
+            knowledge_retriever.learned.add_knowledge(prompt, cleaned, "generated")
+            trainer.add_conversation(prompt, cleaned)
             
-        return {"response": response}
+        return {"response": cleaned}
         
     except Exception as e:
         logger.error(f"Chat error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/preferences")
+async def set_preference(request: PersonalizationRequest):
+    if request.api_key not in VALID_API_KEYS:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    
+    try:
+        save_user_preference(request.email, request.preference_key, request.preference_value)
+        return {"message": f"Successfully saved preference {request.preference_key}"}
+    except Exception as e:
+        logger.error(f"Preference error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

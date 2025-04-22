@@ -139,12 +139,21 @@ class KnowledgeRetriever:
             if (len(sentence) > 10 and  # Long enough
                 sentence[0].isupper() and  # Starts with capital
                 sentence.strip().endswith(('.', '!', '?')) and  # Proper ending
-                not re.search(r'([A-Za-z])\1{2,}', sentence)):  # No character repetition
-                valid_sentences.append(sentence)
+                not re.search(r'([A-Za-z])\1{3,}', sentence) and  # No character repetition
+                sentence.count('?') <= 1 and  # Not too many question marks
+                not re.search(r'\b(\w+)(\s+\1\b){2,}', sentence.lower()) and  # No word repetition
+                len(re.findall(r'[A-Z]{5,}', sentence)) == 0):  # No long uppercase sequences
+                valid_sentences.append(sentence.strip())
                 
         if not valid_sentences:
             return ""
             
+        # For founder/company related queries, ensure response mentions Cronix AI
+        query = self._normalize_query("")  # Get the last query
+        if any(word in query for word in ['founder', 'ceo', 'creator', 'made', 'created']):
+            if not any('cronix' in sentence.lower() for sentence in valid_sentences):
+                return "Rudra Patel is the CEO and Founder of Cronix AI, an innovative company focused on AI model development and fintech solutions."
+        
         return ' '.join(valid_sentences)
 
     def _load_cache(self):

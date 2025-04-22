@@ -3,15 +3,15 @@ COMPANY_INFO = {
     "founder": {
         "name": "Rudra Patel",
         "role": "CEO & Founder",
-        "description": "Rudra Patel is the CEO and Founder of Cronix AI, an innovative company focused on AI model development and fintech solutions. He leads the company's vision in developing advanced artificial intelligence technologies and financial technology solutions."
+        "description": "Rudra Patel is the CEO and Founder of Cronix AI, a pioneering company revolutionizing AI and fintech. He leads the development of cutting-edge AI solutions with a passion for innovation."
     },
     "responses": {
-        "founder": "Rudra Patel is the CEO and Founder of Cronix AI, an innovative company focused on AI model development and fintech solutions.",
-        "creator": "I was created by Rudra Patel, the founder of Cronix AI, a company specializing in AI and fintech solutions.",
+        "founder": "Rudra Patel is the CEO and Founder of Cronix AI, a pioneering company revolutionizing AI and fintech solutions.",
+        "creator": "I was created by Rudra Patel, the founder of Cronix AI, a visionary leader in AI and fintech innovation.",
         "company": "I am an AI assistant from Cronix AI, a company focused on advanced artificial intelligence and fintech solutions.",
         "ceo": "Rudra Patel is the CEO and Founder of Cronix AI.",
-        "rudra": "Rudra Patel is the CEO and Founder of Cronix AI, leading the development of advanced AI models and fintech solutions.",
-        "rudra patel": "Rudra Patel is the CEO and Founder of Cronix AI, an innovative company specializing in AI model development and fintech solutions."
+        "rudra": "Rudra Patel is the CEO and Founder of Cronix AI, a visionary leader driving innovation in AI and fintech.",
+        "rudra patel": "Rudra Patel is the CEO and Founder of Cronix AI, pioneering revolutionary advances in AI and fintech solutions."
     }
 }
 

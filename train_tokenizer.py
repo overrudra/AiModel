@@ -9,7 +9,7 @@ tokenizer = ByteLevelBPETokenizer()
 
 # Train tokenizer
 tokenizer.train(
-    files="ai-backend/app/dataset.txt",
+    files="ai_backend/app/dataset.txt",
     vocab_size=3000,
     min_frequency=2,
     special_tokens=["<pad>", "<unk>", "<s>", "</s>", "<mask>"]

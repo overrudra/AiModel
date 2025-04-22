@@ -6,9 +6,23 @@ def clean_text(text: str) -> str:
     # Remove HTML tags and URLs
     text = re.sub(r'<[^>]+>', '', text)
     text = re.sub(r'http\S+|www.\S+', '', text)
-    # Remove special characters and clean up whitespace
+    
+    # Remove special characters but keep basic punctuation
     text = re.sub(r'[^\w\s.,!?-]', '', text)
-    return ' '.join(text.split())
+    
+    # Clean up whitespace
+    text = ' '.join(text.split())
+    
+    # Detect garbled/nonsensical text patterns
+    if (len(text.split()) < 3 or  # Too short
+        len(text) < 10 or  # Too short
+        re.search(r'([a-zA-Z])\1{2,}', text) or  # Repeated characters
+        text.count('?') > 3 or  # Too many question marks
+        len(re.findall(r'[A-Z]{5,}', text)) > 0 or  # Long uppercase sequences
+        len(re.findall(r'(\b\w+\b)(\s+\1\b)+', text)) > 2):  # Too many repeated words
+        return ""
+        
+    return text.strip()
 
 def extract_domain_name(text: str) -> str:
     """Extract main domain or course name from text"""
@@ -39,16 +53,20 @@ def extract_domain_name(text: str) -> str:
 
 def format_response(text: str, context: str = "") -> str:
     """Format response to be concise and readable"""
-    text = clean_text(text)
+    cleaned = clean_text(text)
+    
+    # If cleaning resulted in empty text, return apologetic response
+    if not cleaned:
+        return "I apologize, but I need to provide a more meaningful response. Could you please rephrase your question?"
     
     if context:
         # Extract only relevant context sentences
         context_parts = context.split('.')
         relevant_parts = [p for p in context_parts if len(p.strip()) > 0][:2]
         if relevant_parts:
-            return f"{text}\n\nSource: {'. '.join(relevant_parts)}."
+            return f"{cleaned}\n\nSource: {'. '.join(relevant_parts)}."
     
-    return text
+    return cleaned
 
 def extract_question_answer(text: str, context: str) -> str:
     """Extract direct answer from context based on question"""

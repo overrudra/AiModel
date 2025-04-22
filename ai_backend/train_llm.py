@@ -5,11 +5,16 @@ from torch.utils.data import Dataset, DataLoader
 from app.char_dataset import CharDataset
 from app.model.llm import TinyTransformer
 from app.model.config import MODEL_CONFIG
+import os
+
+# Get absolute paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TOKENIZER_DIR = os.path.join(BASE_DIR, "app", "tokenizer")
 
 # Load trained tokenizer
 tokenizer = ByteLevelBPETokenizer(
-    "tokenizer/vocab.json",
-    "tokenizer/merges.txt"
+    os.path.join(TOKENIZER_DIR, "vocab.json"),
+    os.path.join(TOKENIZER_DIR, "merges.txt")
 )
 
 # Use configuration from MODEL_CONFIG
@@ -21,7 +26,8 @@ epochs = 10
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Load dataset
-with open("ai-backend/app/dataset.txt", "r", encoding="utf-8") as f:
+dataset_path = os.path.join(BASE_DIR, "app", "dataset.txt")
+with open(dataset_path, "r", encoding="utf-8") as f:
     text = f.read()
 
 # Encode entire dataset
@@ -75,5 +81,6 @@ for epoch in range(epochs):
     print(f"✅ Epoch {epoch + 1}/{epochs} - Loss: {avg_loss:.4f}")
 
 # Save model with full configuration
-model.save_checkpoint("ai-backend/app/model/tiny_llm.pth")
+os.makedirs(os.path.join(BASE_DIR, "app", "model"), exist_ok=True)
+model.save_checkpoint(os.path.join(BASE_DIR, "app", "model", "tiny_llm.pth"))
 print("✅ Model saved successfully!")

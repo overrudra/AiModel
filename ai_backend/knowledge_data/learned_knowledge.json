@@ -1,0 +1,65 @@
+{
+  "your question or prompt here": {
+    "response": "Retrieval-augmented generation (RAG) is a technique that enables generative artificial intelligence (Gen AI) models to retrieve and incorporate new information. It modifies interactions with a large language model (LLM) so that the model responds to user queries with reference to a specified set of documents, using this information to supplement information from its pre-existing training data.",
+    "source": "generated",
+    "timestamp": "2025-04-12T10:33:00.109155",
+    "access_count": 0,
+    "last_verified": "2025-04-12T10:33:00.109162"
+  },
+  "hi": {
+    "response": "Hello Internet is an audio podcast hosted by educational YouTube content creators Brady Haran and CGP Grey. The podcast debuted in 2014 and released 136 numbered episodes and 18 unnumbered episodes until February 2020, when the last episode was published.",
+    "source": "generated",
+    "timestamp": "2025-04-12T10:35:00.891274",
+    "access_count": 0,
+    "last_verified": "2025-04-12T10:35:00.891282"
+  },
+  "whos elon musk": {
+    "response": "Elon Musk is the wealthiest person in the world, with an estimated net worth of US$330 billion as of March 2025, according to the Bloomberg Billionaires Index, and $359.5 billion according to Forbes, primarily from his ownership stakes in Tesla and SpaceX. Having been first listed on the Forbes Billionaires List in 2012, around 75% of Musk's wealth was derived from Tesla stock in November 2020.",
+    "source": "generated",
+    "timestamp": "2025-04-12T10:35:18.735513",
+    "access_count": 0,
+    "last_verified": "2025-04-12T10:35:18.735521"
+  },
+  "wsp": {
+    "response": "WSP Global Inc.",
+    "source": "generated",
+    "timestamp": "2025-04-12T10:52:56.514508",
+    "access_count": 0,
+    "last_verified": "2025-04-12T10:52:56.514515"
+  },
+  "=football": {
+    "response": "Football is a family of team sports that involve, to varying degrees, kicking a ball to score a goal. Unqualified, the word football generally means the form of football that is the most popular where the word is used.",
+    "source": "generated",
+    "timestamp": "2025-04-12T10:53:06.055120",
+    "access_count": 0,
+    "last_verified": "2025-04-12T10:53:06.055127"
+  },
+  "whos your founder": {
+    "response": "whos your foundery torks ndorororororororororororororkporkk yourork yourk yourk yourk your yourk you. you you your youV you you you you you you you you you you you you. you you you you you you you you you you you you you you you you you you",
+    "source": "generated",
+    "timestamp": "2025-04-12T14:36:48.307274",
+    "access_count": 0,
+    "last_verified": "2025-04-12T14:36:48.307286"
+  },
+  "football": {
+    "response": "Football is a family of team sports that involve, to varying degrees, kicking a ball to score a goal. Unqualified, the word football generally means the form of football that is the most popular where the word is used.",
+    "source": "generated",
+    "timestamp": "2025-04-12T14:37:07.591395",
+    "access_count": 0,
+    "last_verified": "2025-04-12T14:37:07.591402"
+  },
+  "founder": {
+    "response": "founderr rrttrrrnrboiermrr r rnrrfrmrr errdnrtme rnrrnorrer rrd urrnnP errrerumrurnrr ere-urrtr nrrroPomor",
+    "source": "generated",
+    "timestamp": "2025-04-12T14:46:24.882970",
+    "access_count": 0,
+    "last_verified": "2025-04-12T14:46:24.882983"
+  },
+  "my favirout color is green remeber": {
+    "response": "my favirout color is green remebery by by by by by by by by by by by by by by boutt by bfoutaratararararararararararararararararar",
+    "source": "generated",
+    "timestamp": "2025-04-22T16:22:06.192383",
+    "access_count": 0,
+    "last_verified": "2025-04-22T16:22:06.192394"
+  }
+}
