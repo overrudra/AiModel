@@ -133,11 +133,11 @@
     "last_verified": "2025-04-09T12:44:32.599677"
   },
   "who is your founder": {
-    "response": "Who is your founderur your ur four four for founr forororororororor for rorororor rorororororororororororororororororor",
+    "response": "Rudra Patel is the CEO and Founder of Cronix AI, a pioneering company revolutionizing AI and fintech solutions.",
     "source": "generated",
-    "timestamp": "2025-04-22T16:06:30.755108",
+    "timestamp": "2025-07-09T08:43:11.927142",
     "access_count": 0,
-    "last_verified": "2025-04-22T16:06:30.755120"
+    "last_verified": "2025-07-09T08:43:11.927150"
   },
   "is bill gates": {
     "response": "A pioneer of the microcomputer revolution of the 1970s and 1980s, he co-founded the software company Microsoft in 1975 with his childhood friend Paul Allen.",
@@ -271,5 +271,47 @@
     "timestamp": "2025-04-22T16:37:31.904509",
     "access_count": 0,
     "last_verified": "2025-04-22T16:37:31.904515"
+  },
+  "hello, what can you do?": {
+    "response": "Hello is a salutation or greeting in the English language. It is first attested in writing from 1826.",
+    "source": "generated",
+    "timestamp": "2025-07-09T08:38:54.673883",
+    "access_count": 0,
+    "last_verified": "2025-07-09T08:38:54.673888"
+  },
+  "is gandhi": {
+    "response": "Mohandas Karamchand Gandhi (2 October 1869  30 January 1948) was an Indian lawyer, anti-colonial nationalist, and political ethicist who employed nonviolent resistance to lead the successful campaign for India's independence from British rule. He inspired movements for civil rights and freedom across the world.",
+    "source": "wikipedia",
+    "timestamp": "2025-07-09T08:43:47.123506",
+    "access_count": 0,
+    "last_verified": "2025-07-09T08:43:47.123516"
+  },
+  "who is gandhi": {
+    "response": "Mohandas Karamchand Gandhi 2 October 1869 30 January 1948 was an Indian lawyer, anti-colonial nationalist, and political ethicist who employed nonviolent resistance to lead the successful campaign for Indias independence from British rule. He inspired movements for civil rights and freedom across the world.",
+    "source": "generated",
+    "timestamp": "2025-07-09T08:43:47.128589",
+    "access_count": 0,
+    "last_verified": "2025-07-09T08:43:47.128593"
+  },
+  "i won a competition!": {
+    "response": "Congratulations! That's fantastic news!",
+    "source": "generated",
+    "timestamp": "2025-07-09T16:25:40.062990",
+    "access_count": 0,
+    "last_verified": "2025-07-09T16:25:40.063001"
+  },
+  "respond in a cheerful and encouraging way: i won a competition!": {
+    "response": "Arnold Alois Schwarzenegger (born July 30, 1947) is an Austrian and American actor, businessman, former politician, and former professional bodybuilder, known for his roles in high-profile action films. He served as the 38th governor of California from 2003 to 2011.",
+    "source": "wikipedia",
+    "timestamp": "2025-07-09T16:19:36.530868",
+    "access_count": 1,
+    "last_verified": "2025-07-09T16:19:36.530879"
+  },
+  "i lost a competition!": {
+    "response": "I'm sorry to hear that. Remember, every setback is a setup for a comeback. You did your best!",
+    "source": "generated",
+    "timestamp": "2025-07-09T16:29:50.661958",
+    "access_count": 0,
+    "last_verified": "2025-07-09T16:29:50.661968"
   }
 }
